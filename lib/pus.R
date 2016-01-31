@@ -6,14 +6,39 @@ library(ggplot2)
 library(RColorBrewer)
 library(maps)
 library(rCharts)
-cols <- c('RAC1P', 'INDP', 'PERNP', 'PINCP', 'OCCP', 'WKHP', 'WKW', 'PWGTP')
+
+# Read data
+cols <- c('RAC1P', 'INDP', 'PERNP', 'PINCP', 'OCCP', 'WKHP', 'WKW', 'PWGTP', 'SCHL',
+          'ST')
 pusa <- fread('ss13pusa.csv', select = cols)
 pusb <- fread('ss13pusb.csv', select = cols)
 pus <- bind_rows(pusa, pusb)
 rm(pusa, pusb)
 str(pus)
+
+# Add state names and abbreviations
+ST.anno = read.csv('statenames.csv', header = T)
+pus <- mutate(pus, STname = ST.anno[ST, 2], STabbr = ST.anno[ST, 3])
+
+# Extract Asians and Whites
 pus <- filter(pus, RAC1P == 1 | RAC1P == 6)
+pus$RAC1P <- as.factor(pus$RAC1P)
+levels(pus$RAC1P) <- c('White', 'Asian')
+# Extract high tech occupations CMM
 pus <- filter(pus, OCCP >= 1005 & OCCP <= 1240)
+# Extract BS, MS, Phd
+pus <- filter(pus, SCHL %in% c(21, 22, 24))
+pus$SCHL <- as.factor(pus$SCHL)
+levels(pus$SCHL) <- c('Bachelor', 'Master', 'Doctorate')
+str(pus)
+#Remove rows with NA in pus
+pus <- pus[complete.cases(pus),]
+
+#Split-Apply-Combine
+pus_race_edu <- ddply(pus, .(RAC1P, SCHL), summarise, MEAN = weighted.mean(PERNP, PWGTP, na.rm = T))
+
+ENR_Race_Edu <- nPlot(MEAN ~ RAC1P, group = 'SCHL', data = pus_race_edu, type = 'multiBarChart')
+ENR_Race_Edu
 
 # INDP(Industry recode for 2013 and later based on 2012 IND codes)
 pus$INDP <- ifelse(pus$INDP >= 170 & pus$INDP <= 290, 170, pus$INDP)
@@ -40,19 +65,15 @@ levels(pus$INDP) <- c("Agriculture, Forestry, Fishing, Hunting", "Mining", "Util
                       "Arts, Entertainment", "Public Administration", "Military", "Unemployed"
 )
 
-#RAC1P
-pus$RAC1P <- as.factor(pus$RAC1P)
-levels(pus$RAC1P) <- c('White', 'Asian')
 
-#Remove NA in PERNP
-pus <- pus[!is.na(pus$PERNP),]
 
-#Remove NA in INDP
-pus <- pus[!is.na(pus$INDP),]
+
 
 #Split-Apply-Combine
 pus_test <- ddply(pus, .(RAC1P, INDP), summarise, MEAN = weighted.mean(PERNP, PWGTP, na.rm = T))
 
-#multiBarChart
+#multiBarChart comparing PERNP
 ENR_Comparison <- nPlot(MEAN ~ RAC1P, group = 'INDP', data = pus_test, type = 'multiBarChart')
 ENR_Comparison
+
+
