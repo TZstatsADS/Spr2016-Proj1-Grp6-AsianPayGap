@@ -1,0 +1,12 @@
+---
+title: "Presentation Rmd"
+author: "Cycle 1-6"
+date: "February 1, 2016"
+output: html_document
+---
+# Introduction
+In an article written by USA Today in October, 2014, [link](http://www.usatoday.com/story/tech/2014/10/09/high-tech-pay-gap-hispanics-asians-african-americans/16606121/), research suggested that Asians in the high-tech industry had lower salaries than their white counterparts. This was an interesting statement, seeing as we often believe Asians make more than whites, particularly in high-paying industries such as tech. Using the American Community Survey (ACS) data from 2013, we decided to see if the survey data fit the findings from this article, and if there were similar differences in salary within other high-paying industries. We then took a closer comparative look at two particularly interesting industries: High-tech, finance, and  
+  
+# The Data
+### (a) Code for collecting data
+### (b) 
