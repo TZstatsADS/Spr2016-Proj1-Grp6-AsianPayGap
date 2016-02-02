@@ -5,11 +5,7 @@ date: "February 1, 2016"
 output: html_document
 ---
 # 1. Introduction
-<<<<<<< HEAD
-In an article written by USA Today in October, 2014, [link](http://www.usatoday.com/story/tech/2014/10/09/high-tech-pay-gap-hispanics-asians-african-americans/16606121/), research suggested that Asians in the high-tech industry had lower salaries than their white counterparts. This was an interesting statement, seeing as we often believe Asians make more than whites, particularly in high-paying industries such as tech. Using the American Community Survey (ACS) data from 2013, we decided to see if the survey data fit the findings from this article, and if there were similar differences in salary within other high-paying industries. We then took a closer comparative look at three particularly interesting industries, high-tech, finance, and medical, to learn more about why the differences occur.
-=======
-In an article written by USA Today in October, 2014, [High Tech Pay Gap](http://www.usatoday.com/story/tech/2014/10/09/high-tech-pay-gap-hispanics-asians-african-americans/16606121/), research suggested that Asians in the high-tech industry had lower salaries than their white counterparts. This was an interesting statement, seeing as we often believe Asians make more than whites, particularly in high-paying industries such as tech. Using the American Community Survey (ACS) data from 2013, we decided to see if the survey data fit the findings from this article, and if there were similar differences in salary within other high-paying industries. We then took a closer comparative look at two particularly interesting industries: High-tech, finance, and  
->>>>>>> master
+In an article written by USA Today in October, 2014, [High Tech Pay Gap](http://www.usatoday.com/story/tech/2014/10/09/high-tech-pay-gap-hispanics-asians-african-americans/16606121/), research suggested that Asians in the high-tech industry had lower salaries than their white counterparts. This was an interesting statement, seeing as we often believe Asians make more than whites, particularly in high-paying industries such as tech. Using the American Community Survey (ACS) data from 2013, we decided to see if the survey data fit the findings from this article, and if there were similar differences in salary within other high-paying industries. We then took a closer comparative look at three particularly interesting industries, high-tech, finance, and medical, to learn more about why the differences occur.
   
 ### 1.1 Set up the Bench
 Libraries we need along the way:
