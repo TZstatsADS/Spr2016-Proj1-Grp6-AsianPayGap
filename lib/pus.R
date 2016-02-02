@@ -7,6 +7,7 @@ library(RColorBrewer)
 library(maps)
 library(rCharts)
 library(plotly)
+library(gridExtra)
 
 # Read data
 cols <- c('RAC1P', 'INDP', 'PERNP', 'PINCP', 'OCCP', 'WKHP', 'WKW', 'PWGTP', 'SCHL',
@@ -24,11 +25,12 @@ pus <- pus[complete.cases(pus),]
 ST.anno = read.csv('statenames.csv', header = T)
 pus <- mutate(pus, STname = ST.anno[ST, 2], STabbr = ST.anno[ST, 3])
 
-# Extract Asians and Whites
+# Extract the Asians and Whites data
 pus <- filter(pus, RAC1P == 1 | RAC1P == 6)
 pus$RAC1P <- as.factor(pus$RAC1P)
 levels(pus$RAC1P) <- c('White', 'Asian')
-# Extract high tech occupations
+
+# Recode OCCP and choose the OCCP with high salary
 pus$OCCP <- ifelse(pus$OCCP >= 10 & pus$OCCP <= 430, 1, pus$OCCP)
 pus$OCCP <- ifelse(pus$OCCP >= 1005 & pus$OCCP <= 1240, 2, pus$OCCP)
 pus$OCCP <- ifelse(pus$OCCP >= 800 & pus$OCCP <= 950, 3, pus$OCCP)
@@ -59,7 +61,9 @@ pus <- filter(pus, OCCP %in% c(1:8))
 pus$OCCP <- as.factor(pus$OCCP)
 # levels(pus$OCCP) <- c('MGR', 'CMM', 'FIN', 'LGL', 'MED' , 'BUS', 'ENG', 'SCI', 'CMS', 'EDU', 'ENT', 'HLS', 'PRT', 'EAT', 'CLN', 'PRS', 'SAL', 'OFF', 'FFF', 'CON', 'EXT', 'RPR', 'PRD', 'TRN', "MIL")
 levels(pus$OCCP) <- c('MGR', 'CMM', 'FIN', 'LGL', 'MED' , 'BUS', 'ENG', 'SCI')
-#Split-Apply-Combine
+
+
+# Use Bar chart to compare the Asian's and White's salary in these OCCPs
 pus_race_occp <- ddply(pus, .(RAC1P, OCCP), summarise, MEAN = weighted.mean(PERNP, PWGTP, na.rm = T))
 ggplot(pus_race_occp, aes(x=OCCP  , y=MEAN, fill=factor(RAC1P))) +
     geom_bar(stat="identity",position="dodge") + scale_fill_hue(l=60,c=110) +
@@ -78,7 +82,7 @@ ggplot(pus_race_occp, aes(x=OCCP  , y=MEAN, fill=factor(RAC1P))) +
 
 
 
-# Extract BS, MS, Phd
+# Extract BS, MS, Phd data
 pus <- filter(pus, SCHL %in% c(21, 22, 24))
 pus$SCHL <- as.factor(pus$SCHL)
 levels(pus$SCHL) <- c('Bachelor', 'Master', 'Doctorate')
@@ -89,6 +93,18 @@ str(pus)
 CMM <- filter(pus, OCCP == 'CMM')
 # Calculate the freq of diff degrees
 CMM_Edu <- ddply(CMM, .(RAC1P, SCHL), summarise, Total = length(SCHL))
+
+# Pie Chart of Education in CMM
+Asian <- filter(CMM_Edu, RAC1P == 'Asian')
+asianDegreePerc <- Asian$Total/sum(Asian$Total)
+Asian<- cbind(Asian, asianDegreePerc)
+Education <- levels(Asian$SCHL)
+White <- filter(CMM_Edu, RAC1P == "White")
+whiteDegreePerc <- White$Total/sum(White$Total)
+White<- cbind(White, whiteDegreePerc)
+asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+grid.arrange(asian_plot, white_plot, ncol=2)
 
 # For CMM, to every state, Asian or White earn more?
 CMM_Ansian <- filter(CMM, RAC1P == 'Asian')
@@ -125,7 +141,20 @@ plot_ly(CMM_state_salary, z = diff, text = hover, locations = abbr, type = 'chor
 
 # Specify FIN occupation
 FIN <- filter(pus, OCCP == 'FIN')
-FIN_Edu <- ddply(CMM, .(RAC1P, SCHL), summarise, Total = length(SCHL))
+FIN_Edu <- ddply(FIN, .(RAC1P, SCHL), summarise, Total = length(SCHL))
+
+# Pie Chart of Education in FIN
+Asian <- filter(FIN_Edu, RAC1P == 'Asian')
+asianDegreePerc <- Asian$Total/sum(Asian$Total)
+Asian<- cbind(Asian, asianDegreePerc)
+Education <- levels(Asian$SCHL)
+White <- filter(FIN_Edu, RAC1P == "White")
+whiteDegreePerc <- White$Total/sum(White$Total)
+White<- cbind(White, whiteDegreePerc)
+asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+grid.arrange(asian_plot, white_plot, ncol=2)
+
 
 # For FIN, to every state, Asian or White earn more?
 FIN_Ansian <- filter(FIN, RAC1P == 'Asian')
@@ -164,6 +193,20 @@ plot_ly(FIN_state_salary, z = diff, text = hover, locations = abbr, type = 'chor
 MED <- filter(pus, OCCP == 'MED')
 MED_Edu <- ddply(MED, .(RAC1P, SCHL), summarise, Total = length(SCHL))
 
+# Pie Chart of Education in MED
+Asian <- filter(MED_Edu, RAC1P == 'Asian')
+asianDegreePerc <- Asian$Total/sum(Asian$Total)
+Asian<- cbind(Asian, asianDegreePerc)
+Education <- levels(Asian$SCHL)
+White <- filter(MED_Edu, RAC1P == "White")
+whiteDegreePerc <- White$Total/sum(White$Total)
+White<- cbind(White, whiteDegreePerc)
+asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+grid.arrange(asian_plot, white_plot, ncol=2)
+
+
+# For MED, to every state, Asian or White earn more?
 MED_Ansian <- filter(MED, RAC1P == 'Asian')
 MED_White <- filter(MED, RAC1P == 'White')
 MED_state_asian <- ddply(MED_Ansian, .(STname), summarise, Asian = weighted.mean(PERNP, PWGTP))
