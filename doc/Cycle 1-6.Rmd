@@ -68,7 +68,7 @@ ggplot(pus_race_occp, aes(x=OCCP  , y=MEAN, fill=factor(RAC1P))) +
     ylab("Mean Salary") + 
     xlab("Industries") + ggtitle(paste("Salary Comparison between Asian & White")) +
     theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          panel.background = element_rect(fill = 'white' ))+theme_grey(base_size = 20)
+          panel.background = element_rect(fill = 'white' ))+theme_grey(base_size = 12)
 ```
 # Education Comparison
 ```{r}
