@@ -1,13 +1,19 @@
 ---
-title: "Presentation Rmd"
-author: "Cycle 1-6"
+title: "Pay Gaps between Asians and Whites Across High-Paying Industries"
+author: "STATW4249, Spring 2016, Cycle 1-6"
 date: "February 1, 2016"
-output: html_document
+output:
+  html_document:
+    fig_width: 8
+    number_sections: yes
+    theme: united
+    highlight: tango
+    toc: yes
 ---
-# 1. Introduction
+# Introduction
 In an article written by USA Today in October, 2014, [High Tech Pay Gap](http://www.usatoday.com/story/tech/2014/10/09/high-tech-pay-gap-hispanics-asians-african-americans/16606121/), research suggested that Asians in the high-tech industry had lower salaries than their white counterparts. This was an interesting statement, seeing as we often believe Asians make more than whites, particularly in high-paying industries such as tech. Using the American Community Survey (ACS) data from 2013, we decided to see if the survey data fit the findings from this article, and if there were similar differences in salary within other high-paying industries. We then took a closer comparative look at three particularly interesting industries, high-tech, finance, and medical, to learn more about why the differences occur.
   
-### 1.1 Setting up
+## Setting up the Bench
 Libraries we need along the way:
 ```{r eval=TRUE, warning=FALSE, message=FALSE}
 library(data.table)
@@ -20,16 +26,19 @@ library(maps)
 library(rCharts)
 library(plotly)
 library(gridExtra)
+library(scales)
 ```
-### 1.2 Reading the data
-RAC1P - Recoded detailed race code
-PERNP - Total person's earnings
-OCCP - Occupation recode for 2012 and later
-PWGTP - (Replicate weights)
-SCHL - Educational attainment
-ST - State Code
 
-Note: We chose to use OCCP (Occupation) instead of INDP (Industry). The census defines industry as the type of activity at a person’s place of work, and occupation as the kind of work a person does to earn a living. Therefore to get a more accurate sample of those in "high-tech", we will be taking those who fall under "Computer and Mathematical Occupations" (CMM), since high-tech companies can stretch across many industries.
+## Reading the Data
+Note: We chose to use OCCP (Occupation) instead of INDP (Industry). The census defines industry as the type of activity at a person’s place of work, and occupation as the kind of work a person does to earn a living. Therefore to get a more accurate sample of those in "high-tech", we will be taking those who fall under "Computer and Mathematical Occupations" (CMM), since high-tech companies can stretch across many if not all industries.  
+We also chose to use PERNP (Earnings) instead of PINCP (Income) to represent salary without annuities, dividends from stock, etc.  
+The following list shows the variables we extracted:  
+RAC1P - Recoded detailed race code  
+PERNP - Total person's earnings  
+OCCP - Occupation recode for 2012 and later  
+PWGTP - (Replicate weights)  
+SCHL - Educational attainment  
+ST - State Code  
 ```{r eval=TRUE}
 cols <- c('RAC1P', 'PERNP', 'OCCP', 'PWGTP', 'SCHL', 'ST')
 pusa <- fread('ss13pusa.csv', select = cols)
@@ -38,7 +47,17 @@ pus <- bind_rows(pusa, pusb)
 rm(pusa, pusb)
 str(pus)
 ```
-### 1.3 Data Manipulation
+
+## Data Manipulation
+The following list shows the eight highest-paying salaries on average by occupation:  
+MGR - Management, Business, Science, and Arts Occupations  
+CMM - Computer and Mathematical Occupations  
+FIN - Financial Specialists  
+LGL - Legal Occupations  
+MED - Healthcare Practitioners and Technical Occupations  
+BUS - Business Operations Specialists  
+ENG - Architecture and Engineering Occupations  
+SCI - Life, Physical, and Social Science Occupations  
 ```{r}
 # Remove rows with NA in pus
 pus <- pus[complete.cases(pus),]
@@ -67,17 +86,28 @@ pus$OCCP <- as.factor(pus$OCCP)
 
 levels(pus$OCCP) <- c('MGR', 'CMM', 'FIN', 'LGL', 'MED' , 'BUS', 'ENG', 'SCI')
 ```
-# Comparing Asians' and Whites' salaries by different occupations
+
+# Big Picture: Comparing Asians' and whites' salaries by different occupations
+
 ```{r}
 pus_race_occp <- ddply(pus, .(RAC1P, OCCP), summarise, MEAN = weighted.mean(PERNP, PWGTP, na.rm = T))
-ggplot(pus_race_occp, aes(x=OCCP  , y=MEAN, fill=factor(RAC1P))) +
-    geom_bar(stat="identity",position="dodge") + scale_fill_hue(l=60,c=110) +
-    ylab("Mean Salary") + 
-    xlab("Industries") + ggtitle(paste("Salary Comparison between Asian & White")) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1),
-          panel.background = element_rect(fill = 'white' ))+theme_grey(base_size = 12)
+ggplot(pus_race_occp, aes(x=OCCP, y=MEAN, fill=factor(RAC1P))) + 
+  geom_bar(stat="identity",position="dodge") + 
+  scale_fill_brewer(palette="RdYlGn") +
+  labs(fill="") + 
+  ylab("Mean Salary ($)") + 
+  xlab("Occupations") + 
+  ggtitle(paste("Salary Comparison between Asians & Whites")) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1), 
+        panel.background = element_rect(fill = 'white' )) + 
+  theme_grey(base_size = 12)
 ```
-# Comparing Asians' and Whites' education levels
+
+There are a few industries that stand out which we will take a closer look at. We first notice that the CMM (Computer and Mathematical Occupations) data, which we are taking as "high-tech", does not seem to support the statement made in the USA Today article. We will also look at FIN (Financial Specialists), the only occupational category in which whites appear to make more than their Asian counterparts. Last, we will look at MED (Healthcare Practitioners and Technical Occupations) because it has the largest percentage difference in mean salary between Asians and whites. 
+
+# Closer look: High-Tech (CMM)
+## Educational Distribution (High-Tech)
+
 ```{r}
 # Extract BS, MS, Phd data
 pus <- filter(pus, SCHL %in% c(21, 22, 24))
@@ -85,13 +115,12 @@ pus$SCHL <- as.factor(pus$SCHL)
 levels(pus$SCHL) <- c('Bachelor', 'Master', 'Doctorate')
 str(pus)
 
-
 # Specify CMM occupation
 CMM <- filter(pus, OCCP == 'CMM')
 # Calculate the freq of diff degrees
 CMM_Edu <- ddply(CMM, .(RAC1P, SCHL), summarise, Total = length(SCHL))
 
-# Pie Chart of Education in CMM
+# Pie Charts for CMM Levels of Education
 Asian <- filter(CMM_Edu, RAC1P == 'Asian')
 asianDegreePerc <- Asian$Total/sum(Asian$Total)
 Asian<- cbind(Asian, asianDegreePerc)
@@ -99,16 +128,40 @@ Education <- levels(Asian$SCHL)
 White <- filter(CMM_Edu, RAC1P == "White")
 whiteDegreePerc <- White$Total/sum(White$Total)
 White<- cbind(White, whiteDegreePerc)
-asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
-white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+
+asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_brewer(palette="Blues") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank()) + 
+  geom_text(aes(y = asianDegreePerc/3 + c(0, cumsum(asianDegreePerc)[-length(asianDegreePerc)]), 
+                label = percent(asianDegreePerc)), size=5) + 
+  labs(x = NULL ,y = "Asian")
+
+white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_brewer(palette="Blues") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank()) + 
+  geom_text(aes(y = whiteDegreePerc/3 + c(0, cumsum(whiteDegreePerc)[-length(whiteDegreePerc)]), 
+                label = percent(whiteDegreePerc)), size=5) +
+  labs(x = NULL ,y = "White")
+
 grid.arrange(asian_plot, white_plot, ncol=2)
 ```
 
-# For CMM, to every state, Asian or White earn more?
+Interestingly enough, within those who have occupations that fall under CMM, there is a higher proportion of Master's degree holders amongst the Asian population than the white population. This may suggest the higher average salary.  
+
+## Salary Contrast by State (High-Tech)
+
+To get a feel for which states had higher pay for whites and which had higher pay for Asians in the high-tech industry, we took the difference in salary and created the following state map. The darker blue a state is, the more Asians make in that state on average. The lighter a state is, the more whites make compared to their Asian counterparts.  
+
 ```{r}
-CMM_Ansian <- filter(CMM, RAC1P == 'Asian')
+CMM_Asian <- filter(CMM, RAC1P == 'Asian')
 CMM_White <- filter(CMM, RAC1P == 'White')
-CMM_state_asian <- ddply(CMM_Ansian, .(STname), summarise, Asian = weighted.mean(PERNP, PWGTP))
+CMM_state_asian <- ddply(CMM_Asian, .(STname), summarise, Asian = weighted.mean(PERNP, PWGTP))
 CMM_state_white <- ddply(CMM_White, .(STname), summarise, White = weighted.mean(PERNP, PWGTP))
 CMM_state_asian <- filter(CMM_state_asian, STname != 'NA')
 CMM_state_white <- filter(CMM_state_white, STname != 'NA')
@@ -116,13 +169,14 @@ state_name <- fread('statenames.csv', select = c('name', 'abbr'))
 CMM_state_salary <-merge(state_name, CMM_state_asian, by.x = 'name', by.y = 'STname', all.x = TRUE)
 CMM_state_salary <-merge(CMM_state_salary, CMM_state_white, by.x = 'name', by.y = 'STname', all.x = TRUE)
 
+# Calculate difference between mean salaries
 CMM_state_salary$diff <- apply(CMM_state_salary, 1, function(x) {as.numeric(x[3]) - as.numeric(x[4])})
 CMM_state_salary[is.na(CMM_state_salary$diff),]$diff <- 0
 
 CMM_state_salary$hover <- with(CMM_state_salary, paste(name, '<br>', "Difference", diff ))
-# give state boundaries a white border
+# Give state boundaries a white border
 l <- list(color = toRGB("white"), width = 2)
-# specify some map projection/options
+# Specify some map projection/options
 g <- list(
     scope = 'usa',
     projection = list(type = 'albers usa'),
@@ -133,15 +187,19 @@ g <- list(
 plot_ly(CMM_state_salary, z = diff, text = hover, locations = abbr, type = 'choropleth',
         locationmode = 'USA-states', color = diff, colors = 'Blues',
         marker = list(line = l), colorbar = list(title = "USD")) %>%
-    layout(title = 'The difference salary between Asians and Whites in every State － CMM', geo = g)
+    layout(title = 'Difference in Salary by State － CMM', geo = g)
 ```
-# Finance
+
+
+# Closer Look: Finance (FIN)
+## Educational Distribution (Finance)
+
 ```{r}
 # Specify FIN occupation
 FIN <- filter(pus, OCCP == 'FIN')
 FIN_Edu <- ddply(FIN, .(RAC1P, SCHL), summarise, Total = length(SCHL))
 
-# Pie Chart of Education in FIN
+# Pie Chart for FIN levels of education
 Asian <- filter(FIN_Edu, RAC1P == 'Asian')
 asianDegreePerc <- Asian$Total/sum(Asian$Total)
 Asian<- cbind(Asian, asianDegreePerc)
@@ -149,22 +207,43 @@ Education <- levels(Asian$SCHL)
 White <- filter(FIN_Edu, RAC1P == "White")
 whiteDegreePerc <- White$Total/sum(White$Total)
 White<- cbind(White, whiteDegreePerc)
-asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
-white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+
+asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_brewer(palette="Reds") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank()) + 
+  geom_text(aes(y = asianDegreePerc/3 + c(0, cumsum(asianDegreePerc)[-length(asianDegreePerc)]), 
+                label = percent(asianDegreePerc)), size=5) + 
+  labs(x = NULL ,y = "Asian")
+
+white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_brewer(palette="Reds") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank()) + 
+  geom_text(aes(y = whiteDegreePerc/3 + c(0, cumsum(whiteDegreePerc)[-length(whiteDegreePerc)]), 
+                label = percent(whiteDegreePerc)), size=5) +
+  labs(x = NULL ,y = "White")
+
 grid.arrange(asian_plot, white_plot, ncol=2)
+```
 
+## Salary Contrast by State (Finance)
 
-# For FIN, to every state, Asian or White earn more?
-FIN_Ansian <- filter(FIN, RAC1P == 'Asian')
+```{r}
+FIN_Asian <- filter(FIN, RAC1P == 'Asian')
 FIN_White <- filter(FIN, RAC1P == 'White')
-FIN_state_asian <- ddply(FIN_Ansian, .(STname), summarise, Asian = weighted.mean(PERNP, PWGTP))
+FIN_state_asian <- ddply(FIN_Asian, .(STname), summarise, Asian = weighted.mean(PERNP, PWGTP))
 FIN_state_white <- ddply(FIN_White, .(STname), summarise, White = weighted.mean(PERNP, PWGTP))
-
 FIN_state_asian <- filter(FIN_state_asian, STname != 'NA')
 FIN_state_white <- filter(FIN_state_white, STname != 'NA')
 FIN_state_salary <-merge(state_name, FIN_state_asian, by.x = 'name', by.y = 'STname', all.x = TRUE)
 FIN_state_salary <-merge(FIN_state_salary, CMM_state_white, by.x = 'name', by.y = 'STname', all.x = TRUE)
 
+# Calculate difference between mean salaries
 FIN_state_salary$diff <- apply(FIN_state_salary, 1, function(x) {as.numeric(x[3]) - as.numeric(x[4])})
 FIN_state_salary[is.na(FIN_state_salary$diff),]$diff <- 0
 
@@ -182,15 +261,18 @@ g <- list(
 plot_ly(FIN_state_salary, z = diff, text = hover, locations = abbr, type = 'choropleth',
         locationmode = 'USA-states', color = diff, colors = 'Reds',
         marker = list(line = l), colorbar = list(title = "USD")) %>%
-    layout(title = 'The difference salary between Asians and Whites in every State － FIN', geo = g)
+    layout(title = 'Difference in Salary by State － FIN', geo = g)
 ```
-# Medicine
+
+# Closer look: Medical (MED)
+## Educational Distribution (Medical)
+
 ```{r}
-# For MED, to every state, Asian or White earn more?
+# Specify MED occupation
 MED <- filter(pus, OCCP == 'MED')
 MED_Edu <- ddply(MED, .(RAC1P, SCHL), summarise, Total = length(SCHL))
 
-# Pie Chart of Education in MED
+# Pie Chart for MED levels of education
 Asian <- filter(MED_Edu, RAC1P == 'Asian')
 asianDegreePerc <- Asian$Total/sum(Asian$Total)
 Asian<- cbind(Asian, asianDegreePerc)
@@ -198,23 +280,43 @@ Education <- levels(Asian$SCHL)
 White <- filter(MED_Edu, RAC1P == "White")
 whiteDegreePerc <- White$Total/sum(White$Total)
 White<- cbind(White, whiteDegreePerc)
-asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
-white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education))+geom_bar(width = 1, stat = "identity")+coord_polar("y", start=0)+scale_fill_brewer(palette="Blues")+theme_minimal()
+
+asian_plot <- ggplot(Asian, aes(x="", y=asianDegreePerc, fill=Education)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_brewer(palette="Purples") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank()) + 
+  geom_text(aes(y = asianDegreePerc/3 + c(0, cumsum(asianDegreePerc)[-length(asianDegreePerc)]), 
+                label = percent(asianDegreePerc)), size=5) + 
+  labs(x = NULL ,y = "Asian")
+
+white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education)) + 
+  geom_bar(width = 1, stat = "identity") + 
+  coord_polar("y", start=0) + 
+  scale_fill_brewer(palette="Purples") + 
+  theme_minimal() + 
+  theme(axis.text.x=element_blank()) + 
+  geom_text(aes(y = whiteDegreePerc/3 + c(0, cumsum(whiteDegreePerc)[-length(whiteDegreePerc)]), 
+                label = percent(whiteDegreePerc)), size=5) +
+  labs(x = NULL ,y = "White")
+
 grid.arrange(asian_plot, white_plot, ncol=2)
+```
 
+## Salary Contrast by State (Medical)
 
-# For MED, to every state, Asian or White earn more?
-MED_Ansian <- filter(MED, RAC1P == 'Asian')
+```{r}
+MED_Asian <- filter(MED, RAC1P == 'Asian')
 MED_White <- filter(MED, RAC1P == 'White')
-MED_state_asian <- ddply(MED_Ansian, .(STname), summarise, Asian = weighted.mean(PERNP, PWGTP))
+MED_state_asian <- ddply(MED_Asian, .(STname), summarise, Asian = weighted.mean(PERNP, PWGTP))
 MED_state_white <- ddply(MED_White, .(STname), summarise, White = weighted.mean(PERNP, PWGTP))
-
-
 MED_state_asian <- filter(MED_state_asian, STname != 'NA')
 MED_state_white <- filter(MED_state_white, STname != 'NA')
 MED_state_salary <-merge(state_name, MED_state_asian, by.x = 'name', by.y = 'STname', all.x = TRUE)
 MED_state_salary <-merge(MED_state_salary, MED_state_white, by.x = 'name', by.y = 'STname', all.x = TRUE)
 
+# Calculate difference between mean salaries
 MED_state_salary$diff <- apply(MED_state_salary, 1, function(x) {as.numeric(x[3]) - as.numeric(x[4])})
 MED_state_salary[is.na(MED_state_salary$diff),]$diff <- 0
 
@@ -232,6 +334,6 @@ g <- list(
 plot_ly(MED_state_salary, z = diff, text = hover, locations = abbr, type = 'choropleth',
         locationmode = 'USA-states', color = diff, colors = 'Purples',
         marker = list(line = l), colorbar = list(title = "USD")) %>%
-    layout(title = 'The difference salary between Asians and Whites in every State － MED', geo = g)
+    layout(title = 'Difference in Salary by State － FIN', geo = g)
 ```
 
