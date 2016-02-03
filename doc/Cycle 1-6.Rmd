@@ -1,6 +1,6 @@
 ---
 title: "Pay Gaps between Asians and Whites Across High-Paying Industries"
-author: "STATW4249, Spring 2016, Cycle 1-6"
+author: "STATW4249, Spring 2016, Cycle 1-6: Tara Shui, YiBo Zhu, Haoyang Chen, Yi Zhou, Xinghao Gu"
 date: "February 1, 2016"
 output:
   html_document:
@@ -345,7 +345,7 @@ g <- list(
 plot_ly(MED_state_salary, z = diff, text = hover, locations = abbr, type = 'choropleth',
         locationmode = 'USA-states', color = diff, colors = 'Purples',
         marker = list(line = l), colorbar = list(title = "USD")) %>%
-    layout(title = 'Difference in Salary by State － FIN', geo = g)
+    layout(title = 'Difference in Salary by State － MED', geo = g)
 ```
 
 As expected, we see that there are many states in which Asians in MED make significantly more than their white counterparts - up to 60K. On the other side of the spectrum, there are a few states in which whites make at most 20K more than Asians.
