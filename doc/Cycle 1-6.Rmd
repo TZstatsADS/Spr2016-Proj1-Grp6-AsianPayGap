@@ -11,7 +11,7 @@ output:
     toc: yes
 ---
 # Introduction
-In an article written by USA Today in October, 2014, [High Tech Pay Gap](http://www.usatoday.com/story/tech/2014/10/09/high-tech-pay-gap-hispanics-asians-african-americans/16606121/), research suggested that Asians in the high-tech industry had lower salaries than their white counterparts. This was an interesting statement, seeing as we often believe Asians make more than whites, particularly in high-paying industries such as tech. Using the American Community Survey (ACS) data from 2013, we decided to see if the survey data fit the findings from this article, and if there were similar differences in salary within other high-paying industries. We then took a closer comparative look at three particularly interesting industries, high-tech, finance, and medical, to learn more about why the differences occur.
+In an article written by USA Today in October, 2014, [High Tech Pay Gap](http://www.usatoday.com/story/tech/2014/10/09/high-tech-pay-gap-hispanics-asians-african-americans/16606121/), research suggested that Asians in the high-tech industry had lower salaries than their white counterparts. This was an interesting statement, seeing as we often believe Asians make more than whites, particularly in high-paying industries such as tech. Using the American Community Survey (ACS) data from 2013, we decided to see if the survey data fit the findings from this article, and if there were similar differences in salary within other high-paying industries. We then took a closer comparative look at three particularly interesting industries--high-tech, finance, and medical--to see if the differences may be due to education.
   
 ## Setting up the Bench
 Libraries we need along the way:
@@ -31,7 +31,8 @@ library(scales)
 
 ## Reading the Data
 Note: We chose to use OCCP (Occupation) instead of INDP (Industry). The census defines industry as the type of activity at a person’s place of work, and occupation as the kind of work a person does to earn a living. Therefore to get a more accurate sample of those in "high-tech", we will be taking those who fall under "Computer and Mathematical Occupations" (CMM), since high-tech companies can stretch across many if not all industries.  
-We also chose to use PERNP (Earnings) instead of PINCP (Income) to represent salary without annuities, dividends from stock, etc.  
+We also chose to use PERNP (Earnings) instead of PINCP (Income) to represent salary without annuities, dividends from stock, etc. 
+
 The following list shows the variables we extracted:  
 RAC1P - Recoded detailed race code  
 PERNP - Total person's earnings  
@@ -106,8 +107,9 @@ ggplot(pus_race_occp, aes(x=OCCP, y=MEAN, fill=factor(RAC1P))) +
 There are a few industries that stand out which we will take a closer look at. We first notice that the CMM (Computer and Mathematical Occupations) data, which we are taking as "high-tech", does not seem to support the statement made in the USA Today article. We will also look at FIN (Financial Specialists), the only occupational category in which whites appear to make more than their Asian counterparts. Last, we will look at MED (Healthcare Practitioners and Technical Occupations) because it has the largest percentage difference in mean salary between Asians and whites. 
 
 # Closer look: High-Tech (CMM)
-## Educational Distribution (High-Tech)
+Let's take a look at those who work in tech.
 
+## Educational Distribution (High-Tech)
 ```{r}
 # Extract BS, MS, Phd data
 pus <- filter(pus, SCHL %in% c(21, 22, 24))
@@ -152,12 +154,10 @@ white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education)) +
 grid.arrange(asian_plot, white_plot, ncol=2)
 ```
 
-Interestingly enough, within those who have occupations that fall under CMM, there is a higher proportion of Master's degree holders amongst the Asian population than the white population. This may suggest the higher average salary.  
+Interestingly enough, within those who have occupations that fall under CMM, there is a higher proportion of Master's degree holders amongst the Asian population than the white population. This may give an explanation for the higher average salary. 
 
 ## Salary Contrast by State (High-Tech)
-
-To get a feel for which states had higher pay for whites and which had higher pay for Asians in the high-tech industry, we took the difference in salary and created the following state map. The darker blue a state is, the more Asians make in that state on average. The lighter a state is, the more whites make compared to their Asian counterparts.  
-
+To get a feel for which states have higher pay for whites and which have higher pay for Asians in the tech industry, we took the difference in salary and created the following state map. The darker blue a state is, the more Asians make in that state on average. The lighter a state is, the more whites make compared to their Asian counterparts. Interactively scroll over each state on the map to get state-specific numbers.
 ```{r}
 CMM_Asian <- filter(CMM, RAC1P == 'Asian')
 CMM_White <- filter(CMM, RAC1P == 'White')
@@ -190,10 +190,14 @@ plot_ly(CMM_state_salary, z = diff, text = hover, locations = abbr, type = 'chor
     layout(title = 'Difference in Salary by State － CMM', geo = g)
 ```
 
+We saw that as a whole, Asians make more on average than their white counterparts in the tech industry. However, we can see from the state map that there are a few states in which whites make significantly more than Asians (North Dakota, Indiana, Rhode Island). Yet this difference in a few states does not offset the overall difference we saw in the previous graph.
+
+Note: none of the differences we see on these maps are due to lack of data (i.e. NULL fields where no Asians or no whites are in an industry). If there was a race with a NULL field, we set the difference to 0. 
 
 # Closer Look: Finance (FIN)
-## Educational Distribution (Finance)
+Let's take a look at those who work in the financial sector. 
 
+## Educational Distribution (Finance)
 ```{r}
 # Specify FIN occupation
 FIN <- filter(pus, OCCP == 'FIN')
@@ -231,8 +235,10 @@ white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education)) +
 grid.arrange(asian_plot, white_plot, ncol=2)
 ```
 
-## Salary Contrast by State (Finance)
+This is interesting. We see that these findings conflict with what we observed about the CMM/tech occupations. Although there is still a higher proportion of Master's degree holders amongst the Asians in FIN, they have, on average, a lower salary than their white counterparts. In fact, many white individuals in FIN only hold Bachelor's degrees.
 
+## Salary Contrast by State (Finance)
+In similar fashion, we'll take a look at a state-by-state comparison of average salaries amongst whites and Asians who have a finance-related job. The darker red a state is, the more Asians make in that state on average. The lighter a state is, the more whites make compared to their Asian counterparts.
 ```{r}
 FIN_Asian <- filter(FIN, RAC1P == 'Asian')
 FIN_White <- filter(FIN, RAC1P == 'White')
@@ -264,9 +270,12 @@ plot_ly(FIN_state_salary, z = diff, text = hover, locations = abbr, type = 'chor
     layout(title = 'Difference in Salary by State － FIN', geo = g)
 ```
 
-# Closer look: Medical (MED)
-## Educational Distribution (Medical)
+This graph appears to be misleading due to Texas being an outlier. In the data, there is only one listed individual under "Asian" + "FIN", thus leading to an "average" salary of 300K+ to represent the entire demographic. With that one exception, however, we see that the overall finding (whites making more than their Asian counterparts in FIN) appears to be true across almost all individual states. Georgia (51275.41) and the District of Columbia (24938.96) are the only two significant exceptions.
 
+# Closer look: Medical (MED)
+Finally, let's take a look at those who work in a medical-related practice.
+
+## Educational Distribution (Medical)
 ```{r}
 # Specify MED occupation
 MED <- filter(pus, OCCP == 'MED')
@@ -304,8 +313,10 @@ white_plot <- ggplot(White, aes(x="", y=whiteDegreePerc, fill=Education)) +
 grid.arrange(asian_plot, white_plot, ncol=2)
 ```
 
-## Salary Contrast by State (Medical)
+The findings on these graphs are interesting. We know that MED had the largest overall difference in salaries between Asians and whites, yet there is a significantly larger proportion of Master's degree holders within the white MED demographic. This may be due to the fact that medical degrees themselves do not count towards a higher level of education. Those that hold Doctorate's or Master's degrees most likely received degrees that do not contribute directly to their positions as doctors, surgeons, etc. That may explain why the differences in degrees holders here do not correlate with our overall findings.
 
+## Salary Contrast by State (Medical)
+Let's also compare average salaries in MED by state just as we did before. The darker purple a state is, the more Asians make in that state on average. The lighter a state is, the more whites make compared to their Asian counterparts.
 ```{r}
 MED_Asian <- filter(MED, RAC1P == 'Asian')
 MED_White <- filter(MED, RAC1P == 'White')
@@ -336,4 +347,8 @@ plot_ly(MED_state_salary, z = diff, text = hover, locations = abbr, type = 'chor
         marker = list(line = l), colorbar = list(title = "USD")) %>%
     layout(title = 'Difference in Salary by State － FIN', geo = g)
 ```
+
+As expected, we see that there are many states in which Asians in MED make significantly more than their white counterparts - up to 60K. On the other side of the spectrum, there are a few states in which whites make at most 20K more than Asians.
+
+# Conclusion  
 
